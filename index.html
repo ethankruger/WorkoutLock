@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WorkoutLock — Training Ledger</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <span class="logo-icon">&#9965;</span>
+        <div>
+          <h1 class="logo-title">WorkoutLock</h1>
+          <p class="logo-subtitle">Personal Training Ledger</p>
+        </div>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-view="split">Weekly Split</button>
+        <button class="nav-btn" data-view="prs">PR Board</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-container">
+
+    <!-- ====== SPLIT VIEW ====== -->
+    <section id="view-split" class="view active">
+
+      <div class="section-header">
+        <h2 class="section-title">Weekly Training Split</h2>
+        <button class="btn-primary" id="add-day-btn">+ Add Day</button>
+      </div>
+
+      <div class="days-grid" id="days-grid">
+        <!-- Day cards injected here -->
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" id="split-empty">
+        <p class="empty-icon">&#128221;</p>
+        <p class="empty-text">No training days yet.<br>Click <strong>+ Add Day</strong> to begin your split.</p>
+      </div>
+
+    </section>
+
+    <!-- ====== PR BOARD VIEW ====== -->
+    <section id="view-prs" class="view">
+
+      <div class="section-header">
+        <h2 class="section-title">Personal Records</h2>
+        <span class="stamp">OFFICIAL LOG</span>
+      </div>
+
+      <div class="pr-board" id="pr-board">
+        <!-- PR rows injected here -->
+      </div>
+
+      <div class="empty-state" id="pr-empty">
+        <p class="empty-icon">&#127942;</p>
+        <p class="empty-text">No PRs recorded yet.<br>Log a lift to start tracking records.</p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Add/Edit Day Modal -->
+  <div class="modal-overlay" id="modal-day">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-day-title">New Training Day</h3>
+        <button class="modal-close" data-close="modal-day">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Day Label</label>
+        <input class="form-input" type="text" id="day-label-input" placeholder="e.g. Push Day, Leg Day…" maxlength="30" />
+
+        <label class="form-label" style="margin-top:1rem;">Day of Week</label>
+        <select class="form-select" id="day-week-input">
+          <option value="">— select —</option>
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
+          <option>Sunday</option>
+          <option>Rest Day</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="modal-day">Cancel</button>
+        <button class="btn-primary" id="save-day-btn">Save Day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Exercise Modal -->
+  <div class="modal-overlay" id="modal-exercise">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Exercise</h3>
+        <button class="modal-close" data-close="modal-exercise">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Exercise Name</label>
+        <input class="form-input" type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squat…" maxlength="40" />
+
+        <label class="form-label" style="margin-top:1rem;">Target Sets</label>
+        <input class="form-input" type="number" id="exercise-sets-input" min="1" max="20" value="3" />
+
+        <label class="form-label" style="margin-top:1rem;">Target Reps</label>
+        <input class="form-input" type="number" id="exercise-reps-input" min="1" max="100" value="10" />
+
+        <label class="form-label" style="margin-top:1rem;">Starting Weight (lbs)</label>
+        <input class="form-input" type="number" id="exercise-weight-input" min="0" step="2.5" value="0" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="modal-exercise">Cancel</button>
+        <button class="btn-primary" id="save-exercise-btn">Add Exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Set Modal -->
+  <div class="modal-overlay" id="modal-logset">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title" id="logset-title">Log Set</h3>
+        <button class="modal-close" data-close="modal-logset">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="log-row">
+          <div class="log-field">
+            <label class="form-label">Weight (lbs)</label>
+            <input class="form-input" type="number" id="logset-weight" min="0" step="2.5" />
+          </div>
+          <div class="log-field">
+            <label class="form-label">Reps</label>
+            <input class="form-input" type="number" id="logset-reps" min="1" max="999" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" data-close="modal-logset">Cancel</button>
+        <button class="btn-primary" id="save-logset-btn">Log Set</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PR Toast -->
+  <div class="pr-toast" id="pr-toast">
+    <span class="pr-toast-icon">&#127942;</span>
+    <span class="pr-toast-msg" id="pr-toast-msg">New PR!</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
