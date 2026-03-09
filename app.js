@@ -4,12 +4,81 @@
 
 'use strict';
 
+// ── Program Definition ────────────────────────────────────
+const PROGRAM = [
+  {
+    name: 'Chest',
+    weekday: 'Monday',
+    exercises: [
+      { name: 'Incline Barbell Press',         sets: 4, reps: 6  },
+      { name: 'Flat Dumbbell Press',            sets: 3, reps: 8  },
+      { name: 'Cable Crossovers (High to Low)', sets: 3, reps: 12 },
+      { name: 'Dips (Chest Variation)',         sets: 3, reps: 8  },
+    ],
+  },
+  {
+    name: 'Back',
+    weekday: 'Tuesday',
+    exercises: [
+      { name: 'Weighted Pull-ups (Wide Grip)',         sets: 4, reps: 6  },
+      { name: 'Heavy Barbell Rows (Underhand Grip)',   sets: 3, reps: 6  },
+      { name: 'Lat Pulldowns (Close Neutral Grip)',    sets: 3, reps: 10 },
+      { name: 'Cable Rows (Wide Grip)',                sets: 3, reps: 12 },
+    ],
+  },
+  {
+    name: 'Legs',
+    weekday: 'Wednesday',
+    exercises: [
+      { name: 'Barbell Back Squats',   sets: 4, reps: 6  },
+      { name: 'Romanian Deadlifts',    sets: 3, reps: 8  },
+      { name: 'Leg Press',             sets: 3, reps: 10 },
+      { name: 'Leg Extensions',        sets: 3, reps: 12 },
+      { name: 'Leg Curls',             sets: 3, reps: 12 },
+      { name: 'Standing Calf Raises',  sets: 4, reps: 12 },
+    ],
+  },
+  {
+    name: 'Rest',
+    weekday: 'Thursday',
+    exercises: [],
+  },
+  {
+    name: 'Shoulders',
+    weekday: 'Friday',
+    exercises: [
+      { name: 'Seated Dumbbell Shoulder Press',         sets: 3, reps: 6  },
+      { name: 'Cross-Body Cable Y-Raises (Side Delts)', sets: 4, reps: 10 },
+      { name: 'Super-ROM Dumbbell Lateral Raises',      sets: 3, reps: 20 },
+      { name: 'Reverse Pec Deck (Rear Delts)',          sets: 3, reps: 10 },
+    ],
+  },
+  {
+    name: 'Triceps',
+    weekday: 'Saturday',
+    exercises: [
+      { name: 'EZ Bar Overhead Tricep Extensions',              sets: 4, reps: 10 },
+      { name: 'Barbell Skull Crushers',                         sets: 3, reps: 8  },
+      { name: 'Cable Pushdowns (Rope Attachment)',               sets: 3, reps: 10 },
+      { name: 'Overhead Cable Tricep Extensions (Single Arm)',  sets: 2, reps: 12 },
+    ],
+  },
+  {
+    name: 'Biceps',
+    weekday: 'Sunday',
+    exercises: [
+      { name: 'Bayesian Cable Curls',         sets: 4, reps: 10 },
+      { name: 'Machine Preacher Curls',       sets: 3, reps: 8  },
+      { name: 'Heavy Barbell / EZ-Bar Curls', sets: 3, reps: 6  },
+      { name: 'Incline Dumbbell Curls',       sets: 3, reps: 10 },
+    ],
+  },
+];
+
 // ── State ─────────────────────────────────────────────────
 let state = {
-  days: [],          // { id, name, weekday, exercises: [] }
-  prs: {},           // { exerciseName: { weight, reps, date, dayName } }
-  editingDayId: null,
-  addingExerciseDayId: null,
+  days: [],
+  prs: {},
   loggingSet: null,  // { dayId, exerciseId, setIndex }
 };
 
@@ -27,6 +96,27 @@ function load() {
       state.prs  = parsed.prs  || {};
     }
   } catch (e) { /* ignore corrupt data */ }
+
+  // First-time load: seed with the hard-coded program
+  if (state.days.length === 0) {
+    state.days = PROGRAM.map(day => ({
+      id: uid(),
+      name: day.name,
+      weekday: day.weekday,
+      exercises: day.exercises.map(def => ({
+        id: uid(),
+        name: def.name,
+        targetReps: def.reps,
+        targetWeight: 0,
+        sets: Array.from({ length: def.sets }, () => ({
+          weight: 0,
+          reps: def.reps,
+          completed: false,
+        })),
+      })),
+    }));
+    save();
+  }
 }
 
 // ── ID Generator ──────────────────────────────────────────
@@ -93,6 +183,8 @@ function renderDayCard(day) {
 
   const exercisesHTML = day.exercises.map(ex => renderExerciseItem(day.id, ex)).join('');
 
+  const isRest = day.exercises.length === 0;
+
   return `
   <div class="day-card" data-day-id="${day.id}">
     <div class="day-card-header">
@@ -100,25 +192,23 @@ function renderDayCard(day) {
         <div class="day-weekday">${escHtml(day.weekday || '')}</div>
         <div class="day-name">${escHtml(day.name)}</div>
       </div>
-      <div class="day-card-actions">
-        <button class="icon-btn" data-action="edit-day" data-day-id="${day.id}" title="Edit Day">&#9998;</button>
-        <button class="icon-btn danger" data-action="delete-day" data-day-id="${day.id}" title="Delete Day">&#10005;</button>
-      </div>
     </div>
 
     <div class="exercise-list" data-day-id="${day.id}">
-      ${exercisesHTML || '<p style="font-size:0.75rem;color:#7a6248;padding:0.5rem 0;font-style:italic;">No exercises yet.</p>'}
+      ${isRest
+        ? '<p style="font-size:0.85rem;color:#7a6248;padding:1rem 0;font-style:italic;text-align:center;">Active recovery &mdash; light cardio, mobility, or full rest.</p>'
+        : exercisesHTML}
     </div>
 
+    ${!isRest ? `
     <div class="day-card-footer">
       <span class="day-progress-text">
         ${totalSets > 0 ? `${completedSets}/${totalSets} sets &mdash; ${pct}%` : 'No sets logged'}
       </span>
       <div style="display:flex;gap:0.4rem;align-items:center;">
         ${totalSets > 0 ? `<button class="btn-reset" data-action="reset-day" data-day-id="${day.id}">reset</button>` : ''}
-        <button class="btn-add-exercise" data-action="add-exercise" data-day-id="${day.id}">+ Add Exercise</button>
       </div>
-    </div>
+    </div>` : ''}
   </div>`;
 }
 
@@ -160,8 +250,6 @@ function renderExerciseItem(dayId, ex) {
         ${allDone ? 'checked' : ''} />
       <span class="exercise-name">${escHtml(ex.name)}</span>
       ${pr ? `<span class="exercise-pr-badge" title="PR: ${pr.weight}lbs × ${pr.reps}">PR</span>` : ''}
-      <button class="icon-btn danger" data-action="delete-exercise"
-        data-day-id="${dayId}" data-ex-id="${ex.id}" title="Remove">&#10005;</button>
     </div>
     <div class="exercise-meta">${totalSets} set${totalSets !== 1 ? 's' : ''} &bull; target ${ex.targetReps} reps &bull; ${ex.targetWeight > 0 ? ex.targetWeight + ' lbs' : 'BW'}</div>
     <div class="set-list">${setsHTML}</div>
@@ -239,64 +327,6 @@ function setupModalClose() {
   });
 }
 
-// ── Day CRUD ──────────────────────────────────────────────
-document.getElementById('add-day-btn').addEventListener('click', () => {
-  state.editingDayId = null;
-  document.getElementById('modal-day-title').textContent = 'New Training Day';
-  document.getElementById('day-label-input').value = '';
-  document.getElementById('day-week-input').value  = '';
-  openModal('modal-day');
-  setTimeout(() => document.getElementById('day-label-input').focus(), 50);
-});
-
-document.getElementById('save-day-btn').addEventListener('click', () => {
-  const name    = document.getElementById('day-label-input').value.trim();
-  const weekday = document.getElementById('day-week-input').value;
-  if (!name) { document.getElementById('day-label-input').focus(); return; }
-
-  if (state.editingDayId) {
-    const day = state.days.find(d => d.id === state.editingDayId);
-    if (day) { day.name = name; day.weekday = weekday; }
-  } else {
-    state.days.push({ id: uid(), name, weekday, exercises: [] });
-  }
-
-  save();
-  renderDays();
-  closeModal('modal-day');
-});
-
-// ── Exercise CRUD ─────────────────────────────────────────
-document.getElementById('save-exercise-btn').addEventListener('click', () => {
-  const name   = document.getElementById('exercise-name-input').value.trim();
-  const sets   = parseInt(document.getElementById('exercise-sets-input').value) || 3;
-  const reps   = parseInt(document.getElementById('exercise-reps-input').value) || 10;
-  const weight = parseFloat(document.getElementById('exercise-weight-input').value) || 0;
-
-  if (!name) { document.getElementById('exercise-name-input').focus(); return; }
-
-  const day = state.days.find(d => d.id === state.addingExerciseDayId);
-  if (!day) return;
-
-  const setArr = Array.from({ length: sets }, () => ({
-    weight,
-    reps,
-    completed: false,
-  }));
-
-  day.exercises.push({
-    id: uid(),
-    name,
-    targetReps: reps,
-    targetWeight: weight,
-    sets: setArr,
-  });
-
-  save();
-  renderDays();
-  closeModal('modal-exercise');
-});
-
 // ── Log Set ───────────────────────────────────────────────
 document.getElementById('save-logset-btn').addEventListener('click', () => {
   if (!state.loggingSet) return;
@@ -312,8 +342,6 @@ document.getElementById('save-logset-btn').addEventListener('click', () => {
 
   ex.sets[setIndex].weight = weight;
   ex.sets[setIndex].reps   = reps;
-
-  // Auto-mark as completed when a set is logged
   ex.sets[setIndex].completed = true;
 
   checkPR(ex.name, weight, reps, day.name);
@@ -327,7 +355,6 @@ document.getElementById('save-logset-btn').addEventListener('click', () => {
 function attachDayListeners() {
   const grid = document.getElementById('days-grid');
 
-  // Remove old listener to avoid duplicates
   grid.replaceWith(grid.cloneNode(true));
   const newGrid = document.getElementById('days-grid');
 
@@ -340,40 +367,7 @@ function handleDayGridClick(e) {
   if (!btn) return;
   const { action, dayId, exId, setIdx } = btn.dataset;
 
-  if (action === 'edit-day') {
-    const day = state.days.find(d => d.id === dayId);
-    if (!day) return;
-    state.editingDayId = dayId;
-    document.getElementById('modal-day-title').textContent = 'Edit Training Day';
-    document.getElementById('day-label-input').value = day.name;
-    document.getElementById('day-week-input').value  = day.weekday || '';
-    openModal('modal-day');
-
-  } else if (action === 'delete-day') {
-    if (!confirm(`Delete "${state.days.find(d => d.id === dayId)?.name}"? This can't be undone.`)) return;
-    state.days = state.days.filter(d => d.id !== dayId);
-    save();
-    renderDays();
-
-  } else if (action === 'add-exercise') {
-    state.addingExerciseDayId = dayId;
-    document.getElementById('exercise-name-input').value   = '';
-    document.getElementById('exercise-sets-input').value   = '3';
-    document.getElementById('exercise-reps-input').value   = '10';
-    document.getElementById('exercise-weight-input').value = '0';
-    openModal('modal-exercise');
-    setTimeout(() => document.getElementById('exercise-name-input').focus(), 50);
-
-  } else if (action === 'delete-exercise') {
-    const day = state.days.find(d => d.id === dayId);
-    if (!day) return;
-    const ex = day.exercises.find(e => e.id === exId);
-    if (!ex || !confirm(`Remove "${ex.name}" from this day?`)) return;
-    day.exercises = day.exercises.filter(e => e.id !== exId);
-    save();
-    renderDays();
-
-  } else if (action === 'log-set') {
+  if (action === 'log-set') {
     const day = state.days.find(d => d.id === dayId);
     if (!day) return;
     const ex  = day.exercises.find(e => e.id === exId);
@@ -394,9 +388,6 @@ function handleDayGridClick(e) {
     day.exercises.forEach(ex => ex.sets.forEach(s => s.completed = false));
     save();
     renderDays();
-
-  } else if (action === 'toggle-exercise') {
-    // Handled in change event
   }
 }
 
@@ -427,12 +418,6 @@ function handleDayGridChange(e) {
 
 // ── Enter key support in modals ───────────────────────────
 function setupEnterKeys() {
-  document.getElementById('day-label-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('save-day-btn').click();
-  });
-  document.getElementById('exercise-name-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('save-exercise-btn').click();
-  });
   document.getElementById('logset-reps').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('save-logset-btn').click();
   });
