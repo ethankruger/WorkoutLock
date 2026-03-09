@@ -5,37 +5,38 @@
 'use strict';
 
 // ── Program Definition ────────────────────────────────────
+// reps: target rep range string (e.g. "6-8"); sets: number of sets
 const PROGRAM = [
   {
     name: 'Chest',
     weekday: 'Monday',
     exercises: [
-      { name: 'Incline Barbell Press',         sets: 4, reps: 6  },
-      { name: 'Flat Dumbbell Press',            sets: 3, reps: 8  },
-      { name: 'Cable Crossovers (High to Low)', sets: 3, reps: 12 },
-      { name: 'Dips (Chest Variation)',         sets: 3, reps: 8  },
+      { name: 'Incline Barbell Press',         sets: 4, reps: '6-8'   },
+      { name: 'Flat Dumbbell Press',            sets: 3, reps: '8-10'  },
+      { name: 'Cable Crossovers (High to Low)', sets: 3, reps: '12-15' },
+      { name: 'Dips (Chest Variation)',         sets: 3, reps: '8-12'  },
     ],
   },
   {
     name: 'Back',
     weekday: 'Tuesday',
     exercises: [
-      { name: 'Weighted Pull-ups (Wide Grip)',         sets: 4, reps: 6  },
-      { name: 'Heavy Barbell Rows (Underhand Grip)',   sets: 3, reps: 6  },
-      { name: 'Lat Pulldowns (Close Neutral Grip)',    sets: 3, reps: 10 },
-      { name: 'Cable Rows (Wide Grip)',                sets: 3, reps: 12 },
+      { name: 'Weighted Pull-ups (Wide Grip)',       sets: 4, reps: '6-10'  },
+      { name: 'Heavy Barbell Rows (Underhand Grip)', sets: 3, reps: '6-8'   },
+      { name: 'Lat Pulldowns (Close Neutral Grip)',  sets: 3, reps: '10-12' },
+      { name: 'Cable Rows (Wide Grip)',              sets: 3, reps: '12-15' },
     ],
   },
   {
     name: 'Legs',
     weekday: 'Wednesday',
     exercises: [
-      { name: 'Barbell Back Squats',   sets: 4, reps: 6  },
-      { name: 'Romanian Deadlifts',    sets: 3, reps: 8  },
-      { name: 'Leg Press',             sets: 3, reps: 10 },
-      { name: 'Leg Extensions',        sets: 3, reps: 12 },
-      { name: 'Leg Curls',             sets: 3, reps: 12 },
-      { name: 'Standing Calf Raises',  sets: 4, reps: 12 },
+      { name: 'Barbell Back Squats',  sets: 4, reps: '6-10'  },
+      { name: 'Romanian Deadlifts',   sets: 3, reps: '8-12'  },
+      { name: 'Leg Press',            sets: 3, reps: '10-15' },
+      { name: 'Leg Extensions',       sets: 3, reps: '12-20' },
+      { name: 'Leg Curls',            sets: 3, reps: '12-20' },
+      { name: 'Standing Calf Raises', sets: 4, reps: '12-20' },
     ],
   },
   {
@@ -47,30 +48,30 @@ const PROGRAM = [
     name: 'Shoulders',
     weekday: 'Friday',
     exercises: [
-      { name: 'Seated Dumbbell Shoulder Press',         sets: 3, reps: 6  },
-      { name: 'Cross-Body Cable Y-Raises (Side Delts)', sets: 4, reps: 10 },
-      { name: 'Super-ROM Dumbbell Lateral Raises',      sets: 3, reps: 20 },
-      { name: 'Reverse Pec Deck (Rear Delts)',          sets: 3, reps: 10 },
+      { name: 'Seated Dumbbell Shoulder Press',         sets: 3, reps: '6-10'  },
+      { name: 'Cross-Body Cable Y-Raises (Side Delts)', sets: 4, reps: '10-15' },
+      { name: 'Super-ROM Dumbbell Lateral Raises',      sets: 3, reps: '20'    },
+      { name: 'Reverse Pec Deck (Rear Delts)',          sets: 3, reps: '10-15' },
     ],
   },
   {
     name: 'Triceps',
     weekday: 'Saturday',
     exercises: [
-      { name: 'EZ Bar Overhead Tricep Extensions',              sets: 4, reps: 10 },
-      { name: 'Barbell Skull Crushers',                         sets: 3, reps: 8  },
-      { name: 'Cable Pushdowns (Rope Attachment)',               sets: 3, reps: 10 },
-      { name: 'Overhead Cable Tricep Extensions (Single Arm)',  sets: 2, reps: 12 },
+      { name: 'EZ Bar Overhead Tricep Extensions',             sets: 4, reps: '10-15' },
+      { name: 'Barbell Skull Crushers',                        sets: 3, reps: '8-12'  },
+      { name: 'Cable Pushdowns (Rope Attachment)',              sets: 3, reps: '10-15' },
+      { name: 'Overhead Cable Tricep Extensions (Single Arm)', sets: 2, reps: '12-20' },
     ],
   },
   {
     name: 'Biceps',
     weekday: 'Sunday',
     exercises: [
-      { name: 'Bayesian Cable Curls',         sets: 4, reps: 10 },
-      { name: 'Machine Preacher Curls',       sets: 3, reps: 8  },
-      { name: 'Heavy Barbell / EZ-Bar Curls', sets: 3, reps: 6  },
-      { name: 'Incline Dumbbell Curls',       sets: 3, reps: 10 },
+      { name: 'Bayesian Cable Curls',         sets: 4, reps: '10-15' },
+      { name: 'Machine Preacher Curls',       sets: 3, reps: '8-12'  },
+      { name: 'Heavy Barbell / EZ-Bar Curls', sets: 3, reps: '6-10'  },
+      { name: 'Incline Dumbbell Curls',       sets: 3, reps: '10-15' },
     ],
   },
 ];
@@ -110,7 +111,7 @@ function load() {
         targetWeight: 0,
         sets: Array.from({ length: def.sets }, () => ({
           weight: 0,
-          reps: def.reps,
+          reps: parseInt(def.reps),   // lower bound of range as starting default
           completed: false,
         })),
       })),
@@ -251,7 +252,7 @@ function renderExerciseItem(dayId, ex) {
       <span class="exercise-name">${escHtml(ex.name)}</span>
       ${pr ? `<span class="exercise-pr-badge" title="PR: ${pr.weight}lbs × ${pr.reps}">PR</span>` : ''}
     </div>
-    <div class="exercise-meta">${totalSets} set${totalSets !== 1 ? 's' : ''} &bull; target ${ex.targetReps} reps &bull; ${ex.targetWeight > 0 ? ex.targetWeight + ' lbs' : 'BW'}</div>
+    <div class="exercise-meta">${totalSets} set${totalSets !== 1 ? 's' : ''} &bull; ${escHtml(String(ex.targetReps))} reps &bull; ${ex.targetWeight > 0 ? ex.targetWeight + ' lbs' : 'BW'}</div>
     <div class="set-list">${setsHTML}</div>
     <div class="exercise-progress">
       <div class="exercise-progress-fill" style="width:${pct}%"></div>
